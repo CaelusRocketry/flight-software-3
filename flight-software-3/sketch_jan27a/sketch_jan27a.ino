@@ -1,14 +1,14 @@
 #include "Arduino.h"
-#include <vector>  // Add this line to include the <vector> header
+#include <vector> 
 
-using namespace std;  // Add this line to use the std namespace
+using namespace std;  
 
 #include <HX711.h>
 #include <Adafruit_MAX31856.h>
 
-#define MIN_TEMP 0.0  // Assuming a minimum temperature value
+#define MIN_TEMP 0.0  
 
-const int MAX_THERMOS = 3;  // Assuming a maximum of 3 thermocouples
+const int MAX_THERMOS = 3;  
 
 vector<int> thermo_pins;
 vector<float> thermo_vals;
@@ -24,14 +24,11 @@ void readLoad();
 
 void setup() {
   Serial.begin(9600);
-  // Initialize your pins and sensors here
-  // Example: load_cell_pins = {A0, A1, A2}; // Initialize your load cell pins
 }
 
 void loop() {
   readThermo();
   readLoad();
-  // Your main loop code here
 }
 
 void thermoDriver(vector<vector<int>> pins) {
@@ -67,7 +64,6 @@ float getThermoValue(int pin) {
 void readLoad() {
   for (unsigned int i = 0; i < load_cell_pins.size(); i++) {
     force_vals[i] = readSensor(load_cell_pins[i]);
-    // Use force_vals as needed
   }
 }
 
