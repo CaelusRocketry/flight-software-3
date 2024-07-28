@@ -15,14 +15,25 @@ using namespace std;
 #define CS2  17
 #define CS3  6
 #define CS4  4
+#define PT_1 35
+#define PT_2 12
+#define PT_3 34
+#define PT_4 27
+#define PT_5 26
+#define PT_6 14
+#define PT_INTVL 500
 
 const int MAX_THERMOS = 3;
-int myPins[] = { 12, 14, 26, 27, 34, 35 };
+//int myPins[] = { 12, 14, 26, 27, 34, 35 };
+int PT_BAR[] = {5, 5, 5, 5, 5, 5};
+int PT[] = {PT_1, PT_2, PT_3, PT_4, PT_5, PT_6};
+int num_meas = 0;
+long tim  = millis();
 
 vector<int> thermo_pins;
 vector<float> thermo_vals;
 vector<Adafruit_MAX31856*> maxthermos;
-
+vector<float> pt_vals;
 vector<int> load_cell_pins;
 vector<float> force_vals;
 
@@ -48,6 +59,37 @@ void setup() {
 void loop() {
   readThermo();
   readLoad();
+  readPT();
+
+}
+
+void readPT(){
+  int R = 150;
+  for(int i = 0; i < MAX_PTS; i++){
+    int inp  = analogRead(PT[i]);
+    double curr =  (3.3*(inp/4096))/R;
+     if( PT_BAR[i] == 5){
+       //capped pressure 725.19
+       pt_vals[i] += 725.19*((curr -.004)/.016);
+     }
+     if(PT_BAR[i] ==10){
+       //capped pressure 1450.38
+       pt_vals[i] += 1450.38*((curr -.004)/.016);
+     }
+     num_meas++;
+  }
+  if(millis()-tim > PT_INTVL){
+    Serial.print("PT ");
+    for(int i= 0; i < MAX_PTS; i++){
+      Serial.print(" ");
+      Serial.print(pt_vals[i]/num_meas);
+    }
+    Serial.println();
+    pt_vals[i] = {0,0 0, 0, 0, 0};
+    num_meas = 0;
+    tim = millis();
+  }
+  
 }
 
 void thermoDriver(vector<vector<int>> pins) {
