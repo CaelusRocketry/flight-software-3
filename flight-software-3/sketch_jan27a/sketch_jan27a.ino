@@ -8,23 +8,21 @@ using namespace std;
 #include <SPI.h>
 
 #define MIN_TEMP 0.0
-#define SCK  17
-#define MISO  19
-#define MOSI  23
-#define CS1  5
-#define CS2  17
-#define CS3  6
-#define CS4  4
-#define PT_1 35
-#define PT_2 12
-#define PT_3 34
-#define PT_4 27
-#define PT_5 26
-#define PT_6 14
+#define SCK 4
+#define MISO 19
+#define MOSI 23
+#define CS1 5
+#define CS2 18
+//PT's Top --> Bottom on PCB
+#define PT_1 12
+#define PT_2 14
+#define PT_3 33
+#define PT_4 32
+#define PT_5 35
+#define PT_6 34
 #define PT_INTVL 500
 
 const int MAX_THERMOS = 3;
-//int myPins[] = { 12, 14, 26, 27, 34, 35 };
 int PT_BAR[] = {5, 5, 5, 5, 5, 5};
 int PT[] = {PT_1, PT_2, PT_3, PT_4, PT_5, PT_6};
 int num_meas = 0;
@@ -48,12 +46,8 @@ void setup() {
   spi.begin(SCK, MISO, MOSI, CS1);
   pinMode(CS1, OUTPUT);
   pinMode(CS2, OUTPUT);
-  pinMode(CS3, OUTPUT);
-  pinMode(CS4, OUTPUT);
   digitalWrite(CS1, HIGH);
   digitalWrite(CS2, HIGH);
-  digitalWrite(CS3, HIGH);
-  digitalWrite(CS4, HIGH);
 }
 
 void loop() {
