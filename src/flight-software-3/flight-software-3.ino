@@ -27,6 +27,7 @@
 const int PT[MAX_PTS] = {PT_1, PT_2, PT_3, PT_4, PT_5, PT_6};
 const int PT_BAR[MAX_PTS] = {5, 5, 5, 5, 5, 5};
 
+char packet[128];
 unsigned long prev_time = millis();
 
 std::vector<float> pt_vals;
@@ -58,8 +59,8 @@ void read_pts() {
 
   for (int i = 0; i < MAX_PTS; i++) {
     int raw_reading = analogRead(PT[i]);
-    double reading = (3.3 * (raw_reading / 4096)) / R;
-    double pt_value = ((reading - 0.004) / 0.016);
+    float reading = (3.3 * (raw_reading / 4096)) / R;
+    float pt_value = ((reading - 0.004) / 0.016);
 
     if (PT_BAR[i] == 5) {
       // capped pressure at 725.19
@@ -134,6 +135,7 @@ float read_sensor(int pin) {
       break;
     }
   }
+
   if (pin_index == -1)
     return 0.0;
 
@@ -151,8 +153,63 @@ float read_pt(int pin) {
   analogRead(pin);
 }
 
-float displayPT() {
+float display_pt() {
   for (int i = 0; i < MAX_PTS; i++) {
     Serial.println("PT at pin " + String(PT[i]) + "reads " + String(read_pt(PT[i])));
   }
+}
+
+char* build_sen_packet() {
+  const char PACKET_START = '^';
+  const char PACKET_END = '$';
+
+  const char PACKET_DELIMITER = '|';
+  const char DATA_DELIMITER = ',';
+
+  snprintf(packet, sizeof(packet), "%cSEN%c%lX%c", PACKET_START, PACKET_DELIMITER, millis(), PACKET_DELIMITER);
+
+  // data is of type <sensor_type><sensor_location><...value>
+  // : sensor_type ∈ {0, 1, 2} ↦ {"thermocouple", "pressure", "load"}
+  // : sensor_location ∈ {1, 2, 3, 4, 5, 6, 7, 8} ↦ {"PT-1", "PT-2", "PT-3", "PT-4", "TC-1", "LC-1", "LC-2", "LC-3"}
+  for (int i = 0; i < MAX_PTS; i++) {
+    long pt_value = static_cast<long>(pt_vals[i]);
+    
+    char buffer[17];
+    
+    buffer[0] = '1';
+    buffer[1] = i + 1;
+
+    ltoa(pt_value, buffer + 2, 16);
+
+    size_t buf_len = strlen(buffer);
+    buffer[buf_len] = DATA_DELIMITER;
+    buffer[buf_len + 1] = '\0';
+    
+    strcat(packet, buffer);
+  }
+
+  // TODO: read force vals and add to packet
+  for (int i = 0; i < MAX_THERMOS; i++) {
+    long thermo_value = static_cast<long>(thermo_vals[i]);
+    
+    char buffer[17];
+
+    buffer[0] = '0';
+    buffer[1] = MAX_PTS + i + 1;
+
+    ltoa(thermo_value, buffer + 2, 16);
+
+    size_t buf_len = strlen(buffer);
+    buffer[buf_len] = DATA_DELIMITER;
+    buffer[buf_len + 1] = '\0';
+    
+    strcat(packet, buffer);
+  }
+  
+  size_t packet_len = strlen(packet);
+  // `packet_len - 1` to remove trailing comma
+  packet[packet_len - 1] = PACKET_END;
+  packet[packet_len] = '\0';
+
+  return packet;
 }
