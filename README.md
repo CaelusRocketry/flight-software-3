@@ -17,5 +17,5 @@ You should now be able to upload to an ESP32. If you're having issues, make sure
 ### Installing libraries
 
 All Arduino libraries are listed in the /lib of the repo. 
-Install them either through **Sketch > Include Library > Manage Libraries** and looking them up or by installing the zip file in each library's repo and going to **Sketch > Include Library > Add .ZIP library** 
+Install them either through **Sketch > Include Library > Manage Libraries** and looking them up or by installing the zip file from each submodule and going to **Sketch > Include Library > Add .ZIP library** 
 
