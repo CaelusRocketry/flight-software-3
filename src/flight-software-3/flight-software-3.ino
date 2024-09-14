@@ -3,8 +3,11 @@
 #include <SPI.h>
 #include <HX711.h>
 #include <Adafruit_MAX31856.h>
-
 #include <vector>
+#include "BluetoothSerial.h"
+#if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
+//#error Bluetooth is not enabled! Please run `make menuconfig` to and enable it  (based on example)
+#endif
 
 #define SCK         4
 #define MISO        19
@@ -25,12 +28,17 @@
 #define MAX_PTS     6
 
 const int PT[MAX_PTS] = {PT_1, PT_2, PT_3, PT_4, PT_5, PT_6};
+//TODO: determine which PT has 10 bar
 const int PT_BAR[MAX_PTS] = {5, 5, 5, 5, 5, 5};
+BluetoothSerial SerialBT;
 
+int nRead = 0;
 char packet[128];
 unsigned long prev_time = millis();
 
+
 std::vector<float> pt_vals;
+std::vector<float> pt_vals_temp;
 
 std::vector<int> thermo_pins;
 std::vector<float> thermo_vals;
@@ -40,50 +48,54 @@ std::vector<int> load_cell_pins;
 std::vector<float> force_vals;
 
 void setup() {
-  Serial.begin(9600);
-  SPI.begin(SCK, MISO, MOSI, CS1);
-  pinMode(CS1, OUTPUT);
-  pinMode(CS2, OUTPUT);
-  digitalWrite(CS1, HIGH);
-  digitalWrite(CS2, HIGH);
+  Serial.begin(115200);
+  SerialBT.begin("SensorPCB");
+  //TODO: add SPI pins to sensor instantiation
+  //  SPI.begin(SCK, MISO, MOSI, CS1);
+  //  pinMode(CS1, OUTPUT);
+  //  pinMode(CS2, OUTPUT);
+  //  digitalWrite(CS1, HIGH);
+  //  digitalWrite(CS2, HIGH);
 }
 
 void loop() {
   read_thermos();
   read_load();
   read_pts();
+  send_data(build_sen_packet());
 }
 
 void read_pts() {
   const int R = 150;
-
   for (int i = 0; i < MAX_PTS; i++) {
     int raw_reading = analogRead(PT[i]);
-    float reading = (3.3 * (raw_reading / 4096)) / R;
-    float pt_value = ((reading - 0.004) / 0.016);
+    
+    //gets current based on raw input
+    float current = (3.3 * (raw_reading / 4096)) / R;
+
+    //scales current based on datasheet 
+    float pt_value = ((current - 0.004) / 0.016);
 
     if (PT_BAR[i] == 5) {
       // capped pressure at 725.19
-      pt_vals[i] += 725.19 * pt_value;
+      pt_vals_temp[i] += 725.19 * pt_value;
     } else if (PT_BAR[i] == 10) {
       // capped pressure at 1450.38
-      pt_vals[i] += 1450.38 * pt_value;
+      pt_vals_temp[i] += 1450.38 * pt_value;
     }
+    
   }
-
+  nRead++;
   unsigned long time_elapsed = millis();
 
   if ((time_elapsed - prev_time) > PT_DELAY) {
-    Serial.print("PT ");
-
     for (int i = 0; i < MAX_PTS; i++) {
-      Serial.print(" ");
-      Serial.print(pt_vals[i] / MAX_PTS);
+      pt_val[i] =  pt_vals_temp[i] / nRead;
     }
-    Serial.println();
 
-    pt_vals = {0, 0, 0, 0, 0, 0};
+    pt_vals_temp = {0, 0, 0, 0, 0, 0};
     prev_time = time_elapsed;
+    count = 0;
   }
 }
 
@@ -149,22 +161,12 @@ float read_sensor(int pin) {
   return temperature;
 }
 
-float read_pt(int pin) {
-  analogRead(pin);
-}
-
-float display_pt() {
-  for (int i = 0; i < MAX_PTS; i++) {
-    Serial.println("PT at pin " + String(PT[i]) + "reads " + String(read_pt(PT[i])));
-  }
-}
-
 char* build_sen_packet() {
   const char PACKET_START = '^';
   const char PACKET_END = '$';
 
   const char PACKET_DELIMITER = '|';
-  const char DATA_DELIMITER = ',';
+  const char DATbuA_DELIMITER = ',';
 
   snprintf(packet, sizeof(packet), "%cSEN%c%lX%c", PACKET_START, PACKET_DELIMITER, millis(), PACKET_DELIMITER);
 
@@ -212,4 +214,13 @@ char* build_sen_packet() {
   packet[packet_len] = '\0';
 
   return packet;
+}
+
+void send_data(*char dat){
+   //Sends data over ethernet
+   Serial1.println(dat);
+   //Sends data over XBee
+   Serial2.print(dat);
+   //Sends data over bluetooth
+   SerialBT.println(dat);
 }
