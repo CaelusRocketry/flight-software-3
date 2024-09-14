@@ -1,0 +1,12 @@
+[submodule "lib/HX711"]
+	path = lib/HX711
+	url = https://github.com/bogde/HX711
+[submodule "lib/EspSoftwareSerial"]
+	path = lib/EspSoftwareSerial
+	url = https://github.com/plerup/espsoftwareserial
+[submodule "lib/Adafruit_MAX31856"]
+	path = lib/Adafruit_MAX31856
+	url = https://github.com/adafruit/Adafruit_MAX31856
+[submodule "lib/Adafruit_BusIO"]
+	path = lib/Adafruit_BusIO
+	url = https://github.com/adafruit/Adafruit_BusIO
