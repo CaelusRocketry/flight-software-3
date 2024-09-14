@@ -90,7 +90,7 @@ void read_pts() {
 
   if ((time_elapsed - prev_time) > PT_DELAY) {
     for (int i = 0; i < MAX_PTS; i++) {
-      pt_vals[i] =  pt_vals_temp[i] / nRead;
+      pt_vals[i] =  pt_vals_temp[i] / nSamp;
     }
 
     pt_vals_temp = {0, 0, 0, 0, 0, 0};
