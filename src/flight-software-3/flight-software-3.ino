@@ -32,7 +32,7 @@ const int PT[MAX_PTS] = {PT_1, PT_2, PT_3, PT_4, PT_5, PT_6};
 const int PT_BAR[MAX_PTS] = {5, 5, 5, 5, 5, 5};
 BluetoothSerial SerialBT;
 
-int nRead = 0;
+int nSamp = 0;
 char packet[128];
 unsigned long prev_time = millis();
 
@@ -59,8 +59,8 @@ void setup() {
 }
 
 void loop() {
-  read_thermos();
-  read_load();
+//  read_thermos(); uncomment when set up
+//  read_load(); uncomment when set up
   read_pts();
   send_data(build_sen_packet());
 }
@@ -85,17 +85,17 @@ void read_pts() {
     }
     
   }
-  nRead++;
+  nSamp++;
   unsigned long time_elapsed = millis();
 
   if ((time_elapsed - prev_time) > PT_DELAY) {
     for (int i = 0; i < MAX_PTS; i++) {
-      pt_val[i] =  pt_vals_temp[i] / nRead;
+      pt_vals[i] =  pt_vals_temp[i] / nRead;
     }
 
     pt_vals_temp = {0, 0, 0, 0, 0, 0};
     prev_time = time_elapsed;
-    count = 0;
+    nSamp = 0;
   }
 }
 
@@ -166,7 +166,7 @@ char* build_sen_packet() {
   const char PACKET_END = '$';
 
   const char PACKET_DELIMITER = '|';
-  const char DATbuA_DELIMITER = ',';
+  const char DATA_DELIMITER = ',';
 
   snprintf(packet, sizeof(packet), "%cSEN%c%lX%c", PACKET_START, PACKET_DELIMITER, millis(), PACKET_DELIMITER);
 
@@ -216,11 +216,11 @@ char* build_sen_packet() {
   return packet;
 }
 
-void send_data(*char dat){
+void send_data(char *dat){
    //Sends data over ethernet
-   Serial1.println(dat);
+//   Serial1.println(dat); uncomment once hardware set up
    //Sends data over XBee
-   Serial2.print(dat);
+//   Serial2.print(dat); uncomment once XBee set up
    //Sends data over bluetooth
    SerialBT.println(dat);
 }
