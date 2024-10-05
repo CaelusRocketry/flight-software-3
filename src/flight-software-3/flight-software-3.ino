@@ -57,10 +57,9 @@ void setup() {
   //  digitalWrite(CS1, HIGH);
   //  digitalWrite(CS2, HIGH);
 }
-
-void loop() {
-//  read_thermos(); uncomment when set up
-//  read_load(); uncomment when set up
+void loop(){
+  //  read_thermos(); uncomment when set up
+  //  read_load(); uncomment when set up
   read_pts();
   send_data(build_sen_packet());
 }
@@ -69,11 +68,11 @@ void read_pts() {
   const int R = 150;
   for (int i = 0; i < MAX_PTS; i++) {
     int raw_reading = analogRead(PT[i]);
-    
+
     //gets current based on raw input
     float current = (3.3 * (raw_reading / 4096)) / R;
 
-    //scales current based on datasheet 
+    //scales current based on datasheet
     float pt_value = ((current - 0.004) / 0.016);
 
     if (PT_BAR[i] == 5) {
@@ -83,14 +82,14 @@ void read_pts() {
       // capped pressure at 1450.38
       pt_vals_temp[i] += 1450.38 * pt_value;
     }
-    
+
   }
   nSamp++;
   unsigned long time_elapsed = millis();
 
   if ((time_elapsed - prev_time) > PT_DELAY) {
     for (int i = 0; i < MAX_PTS; i++) {
-      pt_vals[i] =  pt_vals_temp[i] / nRead;
+      pt_vals[i] =  pt_vals_temp[i] / nSamp;
     }
 
     pt_vals_temp = {0, 0, 0, 0, 0, 0};
@@ -98,68 +97,68 @@ void read_pts() {
     nSamp = 0;
   }
 }
-
-void thermo_driver(std::vector<std::vector<int>> pins) {
-  for (int i = 0; i < pins.size() && i < MAX_THERMOS; i++) {
-    thermo_pins.push_back(pins[i][0]);
-    thermo_vals.push_back(MIN_TEMP);
-    
-    Adafruit_MAX31856* afmax_thermo = new Adafruit_MAX31856(pins[i][0], pins[i][1], pins[i][2], pins[i][3]);
-    afmax_thermo->begin();
-    afmax_thermos.push_back(afmax_thermo);
-  }
-}
-
-void read_thermos() {
-  for (int i = 0; i < thermo_pins.size(); i++) {
-    thermo_vals[i] = read_sensor(thermo_pins[i]);
-  }
-}
-
-float get_thermo_value(int pin) {
-  int pin_index = -1;
-  
-  for (int i = 0; i < MAX_THERMOS; i++) {
-    if (thermo_pins[i] == pin) {
-      pin_index = i;
-      break;
-    }
-  }
-
-  if (pin_index == -1)
-    return 0.0;
-
-  return thermo_vals[pin_index];
-}
-
-void read_load() {
-  for (int i = 0; i < load_cell_pins.size(); i++) {
-    force_vals[i] = read_sensor(load_cell_pins[i]);
-  }
-}
-
-float read_sensor(int pin) {
-  int pin_index = -1;
-
-  for (int i = 0; i < MAX_THERMOS; i++) {
-    if (thermo_pins[i] == pin) {
-      pin_index = i;
-      break;
-    }
-  }
-
-  if (pin_index == -1)
-    return 0.0;
-
-  float temperature = afmax_thermos[pin_index]->readThermocoupleTemperature();
-  uint8_t fault = afmax_thermos[pin_index]->readFault();
-  Serial.println("Thermo " + String(pin_index) + ": " + String(temperature) + " " + String(fault));
-
-  if (fault)
-    temperature = 420.0;
-
-  return temperature;
-}
+////
+////void thermo_driver(std::vector<std::vector<int>> pins) {
+////  for (int i = 0; i < pins.size() && i < MAX_THERMOS; i++) {
+////    thermo_pins.push_back(pins[i][0]);
+////    thermo_vals.push_back(MIN_TEMP);
+////
+////    Adafruit_MAX31856* afmax_thermo = new Adafruit_MAX31856(pins[i][0], pins[i][1], pins[i][2], pins[i][3]);
+////    afmax_thermo->begin();
+////    afmax_thermos.push_back(afmax_thermo);
+////  }
+////}
+////
+////void read_thermos() {
+////  for (int i = 0; i < thermo_pins.size(); i++) {
+////    thermo_vals[i] = read_sensor(thermo_pins[i]);
+////  }
+////}
+////
+////float get_thermo_value(int pin) {
+////  int pin_index = -1;
+////
+////  for (int i = 0; i < MAX_THERMOS; i++) {
+////    if (thermo_pins[i] == pin) {
+////      pin_index = i;
+////      break;
+////    }
+////  }
+////
+////  if (pin_index == -1)
+////    return 0.0;
+////
+////  return thermo_vals[pin_index];
+////}
+////
+////void read_load() {
+////  for (int i = 0; i < load_cell_pins.size(); i++) {
+////    force_vals[i] = read_sensor(load_cell_pins[i]);
+////  }
+////}
+////
+////float read_sensor(int pin) {
+////  int pin_index = -1;
+////
+////  for (int i = 0; i < MAX_THERMOS; i++) {
+////    if (thermo_pins[i] == pin) {
+////      pin_index = i;
+////      break;
+////    }
+////  }
+////
+////  if (pin_index == -1)
+////    return 0.0;
+////
+////  float temperature = afmax_thermos[pin_index]->readThermocoupleTemperature();
+////  uint8_t fault = afmax_thermos[pin_index]->readFault();
+////  Serial.println("Thermo " + String(pin_index) + ": " + String(temperature) + " " + String(fault));
+////
+////  if (fault)
+////    temperature = 420.0;
+////
+////  return temperature;
+////}
 
 char* build_sen_packet() {
   const char PACKET_START = '^';
@@ -175,9 +174,9 @@ char* build_sen_packet() {
   // : sensor_location ∈ {1, 2, 3, 4, 5, 6, 7, 8} ↦ {"PT-1", "PT-2", "PT-3", "PT-4", "TC-1", "LC-1", "LC-2", "LC-3"}
   for (int i = 0; i < MAX_PTS; i++) {
     long pt_value = static_cast<long>(pt_vals[i]);
-    
+
     char buffer[17];
-    
+
     buffer[0] = '1';
     buffer[1] = i + 1;
 
@@ -186,14 +185,14 @@ char* build_sen_packet() {
     size_t buf_len = strlen(buffer);
     buffer[buf_len] = DATA_DELIMITER;
     buffer[buf_len + 1] = '\0';
-    
+
     strcat(packet, buffer);
   }
 
   // TODO: read force vals and add to packet
   for (int i = 0; i < MAX_THERMOS; i++) {
     long thermo_value = static_cast<long>(thermo_vals[i]);
-    
+
     char buffer[17];
 
     buffer[0] = '0';
@@ -204,10 +203,10 @@ char* build_sen_packet() {
     size_t buf_len = strlen(buffer);
     buffer[buf_len] = DATA_DELIMITER;
     buffer[buf_len + 1] = '\0';
-    
+
     strcat(packet, buffer);
   }
-  
+
   size_t packet_len = strlen(packet);
   // `packet_len - 1` to remove trailing comma
   packet[packet_len - 1] = PACKET_END;
@@ -215,12 +214,12 @@ char* build_sen_packet() {
 
   return packet;
 }
-
-void send_data(char *dat){
-   //Sends data over ethernet
-//   Serial1.println(dat); uncomment once hardware set up
-   //Sends data over XBee
-//   Serial2.print(dat); uncomment once XBee set up
-   //Sends data over bluetooth
-   SerialBT.println(dat);
+////
+void send_data(char *dat) {
+  //Sends data over ethernet
+  //   Serial1.println(dat); uncomment once hardware set up
+  //Sends data over XBee
+  //   Serial2.print(dat); uncomment once XBee set up
+  //Sends data over bluetooth
+  SerialBT.write((uint8_t)atoi(dat));
 }
