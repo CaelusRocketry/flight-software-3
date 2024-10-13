@@ -35,7 +35,7 @@ int nSamp = 0;
 char packet[128];
 unsigned long prev_time = millis();
 unsigned long prev_time_send =millis();
-
+size_t packet_len  = 0;
 float pt_vals[MAX_PTS] = {0, 0,0 ,0 ,0, 0 };
 float pt_vals_temp[MAX_PTS] =  {0, 0, 0, 0, 0, 0};
 
@@ -63,10 +63,10 @@ void loop(){
   //  read_thermos(); uncomment when set up
   //  read_load(); uncomment when set up
   read_pts();
-  if(millis()-prev_time_send){
-    send_data(build_sen_packet());
-    prev_time_send = millis();
-  }
+  // if(millis()-prev_time_send){
+  send_data(build_sen_packet());
+  prev_time_send = millis();
+  // }
   
   
 }
@@ -215,10 +215,11 @@ char* build_sen_packet() {
 //    strcat(packet, buffer);
 //  }
 
-  size_t packet_len = strlen(packet);
+  packet_len = strlen(packet);
   // `packet_len - 1` to remove trailing comma
   packet[packet_len - 1] = PACKET_END;
   packet[packet_len] = '\0';
+
 //  Serial.println(packet);
   return packet;
 }
@@ -230,5 +231,9 @@ void send_data(char *dat) {
   //   Serial2.print(dat); uncomment once XBee set up
   //Sends data over bluetooth
   Serial.println(dat);
-  SerialBT.write((uint8_t)atoi(dat));
+  // SerialBT.write((uint8_t)atoi(dat));
+  for(char* i = dat; *i != 0; i++){
+    // Serial.println(*i);
+    SerialBT.write(*i);
+  }
 }
