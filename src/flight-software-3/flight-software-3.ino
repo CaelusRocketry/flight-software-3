@@ -25,6 +25,7 @@
 #define MIN_TEMP    0.0
 #define MAX_THERMOS 3
 #define MAX_PTS     6
+#define USED_PTS 4 
 
 const int PT[MAX_PTS] = {PT_1, PT_2, PT_3, PT_4, PT_5, PT_6};
 //TODO: determine which PT has 10 bar
@@ -36,7 +37,7 @@ char packet[128];
 unsigned long prev_time = millis();
 unsigned long prev_time_send =millis();
 size_t packet_len  = 0;
-float pt_vals[MAX_PTS] = {0, 0,0 ,0 ,0, 0 };
+float pt_vals[MAX_PTS] = {0, 0, 0, 0, 0, 0};
 float pt_vals_temp[MAX_PTS] =  {0, 0, 0, 0, 0, 0};
 
 //std::vector<int> thermo_pins;
@@ -96,6 +97,7 @@ void read_pts() {
   if ((time_elapsed - prev_time) > PT_DELAY) {
     for (int i = 0; i < MAX_PTS; i++) {
       pt_vals[i] =  pt_vals_temp[i] / nSamp;
+      
     }
 
     for(int i = 0; i < MAX_PTS; i++){
@@ -103,7 +105,9 @@ void read_pts() {
     }
     prev_time = time_elapsed;
     nSamp = 0;
+
   }
+  
 }
 
 //void thermo_driver(std::vector<std::vector<int>> pins) {
@@ -180,14 +184,13 @@ char* build_sen_packet() {
   // data is of type <sensor_type><sensor_location><...value>
   // : sensor_type ∈ {0, 1, 2} ↦ {"thermocouple", "pressure", "load"}
   // : sensor_location ∈ {1, 2, 3, 4, 5, 6, 7, 8} ↦ {"PT-1", "PT-2", "PT-3", "PT-4", "TC-1", "LC-1", "LC-2", "LC-3"}
-  for (int i = 0; i < MAX_PTS; i++) {
+  for (int i = 0; i < USED_PTS; i++) {
     long pt_value = static_cast<long>(pt_vals[i]);
 
     char buffer[17];
 
     buffer[0] = '1';
-    buffer[1] = i + 1;
-
+    buffer[1] = i +1 +'0';
     ltoa(pt_value, buffer + 2, 16);
 
     size_t buf_len = strlen(buffer);
@@ -223,7 +226,6 @@ char* build_sen_packet() {
 //  Serial.println(packet);
   return packet;
 }
-////
 void send_data(char *dat) {
   //Sends data over ethernet
   //   Serial1.println(dat); uncomment once hardware set up
